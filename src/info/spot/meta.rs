@@ -2,7 +2,6 @@ use core::mem::take;
 use std::vec::Vec;
 
 use alloy_primitives::{Address, B128};
-use derive_more::{From, IsVariant, TryUnwrap, Unwrap};
 use smol_str::SmolStr;
 
 #[cfg(feature = "serde")]
@@ -720,15 +719,118 @@ impl AssetContext {
   }
 }
 
-/// Represents either spot metadata or asset contexts.
-#[derive(Debug, Clone, IsVariant, Unwrap, TryUnwrap, From)]
-#[unwrap(ref, ref_mut)]
-#[try_unwrap(ref, ref_mut)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-pub enum MetaOrAssetContexts {
-  /// Represents spot metadata.
-  Meta(Meta),
+/// Represents the metadata and asset contexts for derivatives.
+#[derive(Debug, Clone)]
+pub struct MetaAndAssetContexts {
+  /// Represents derivatives metadata.
+  meta: Meta,
   /// Represents asset contexts.
-  Contexts(Vec<AssetContext>),
+  contexts: Vec<AssetContext>,
 }
+
+impl From<MetaAndAssetContexts> for Meta {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    value.meta
+  }
+}
+
+impl From<MetaAndAssetContexts> for Vec<AssetContext> {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    value.contexts
+  }
+}
+
+impl From<MetaAndAssetContexts> for (Meta, Vec<AssetContext>) {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    (value.meta, value.contexts)
+  }
+}
+
+impl MetaAndAssetContexts {
+  /// Creates an empty instance of `MetaAndAssetContexts` with an empty meta and no asset contexts.
+  #[inline(always)]
+  pub const fn empty() -> Self {
+    Self::new(Meta::empty(), Vec::new())
+  }
+
+  /// Creates a new instance of `MetaAndAssetContexts` with the given meta and asset contexts.
+  #[inline(always)]
+  pub const fn new(meta: Meta, contexts: Vec<AssetContext>) -> Self {
+    Self { meta, contexts }
+  }
+
+  /// Returns a reference to the meta field.
+  #[inline(always)]
+  pub const fn meta(&self) -> &Meta {
+    &self.meta
+  }
+
+  /// Returns a mutable reference to the meta field.
+  #[inline(always)]
+  pub fn meta_mut(&mut self) -> &mut Meta {
+    &mut self.meta
+  }
+
+  /// Returns a reference to the contexts field.
+  #[inline(always)]
+  pub const fn contexts(&self) -> &[AssetContext] {
+    self.contexts.as_slice()
+  }
+
+  /// Returns a mutable reference to the contexts field.
+  #[inline(always)]
+  pub const fn contexts_mut(&mut self) -> &mut [AssetContext] {
+    self.contexts.as_mut_slice()
+  }
+
+  /// Takes the asset contexts out of the `MetaAndAssetContexts` instance, leaving an empty vector in its place.
+  #[inline(always)]
+  pub fn take_contexts(&mut self) -> Vec<AssetContext> {
+    take(&mut self.contexts)
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns the contained `Meta`.
+  #[inline(always)]
+  pub fn into_meta(self) -> Meta {
+    self.into()
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns the contained asset contexts.
+  #[inline(always)]
+  pub fn into_contexts(self) -> Vec<AssetContext> {
+    self.into()
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns both the contained `Meta` and asset contexts.
+  #[inline(always)]
+  pub fn into_parts(self) -> (Meta, Vec<AssetContext>) {
+    self.into()
+  }
+}
+
+#[cfg(feature = "serde")]
+const _: () = {
+  use serde::{Deserializer, Serializer};
+
+  impl<'de> Deserialize<'de> for MetaAndAssetContexts {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: Deserializer<'de>,
+    {
+      <(Meta, Vec<AssetContext>)>::deserialize(deserializer)
+        .map(|(meta, contexts)| Self::new(meta, contexts))
+    }
+  }
+
+  impl Serialize for MetaAndAssetContexts {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: Serializer,
+    {
+      (&self.meta, &self.contexts).serialize(serializer)
+    }
+  }
+};
