@@ -1,7 +1,7 @@
 use core::mem::take;
 use std::vec::Vec;
 
-use derive_more::{Display, From, Into, IsVariant, TryUnwrap, Unwrap};
+use derive_more::{Display, From, Into, IsVariant};
 use jiff::civil::DateTime;
 use smol_str::SmolStr;
 
@@ -111,53 +111,6 @@ pub struct MarginTable {
   description: SmolStr,
   margin_tiers: Vec<MarginTier>,
 }
-
-#[cfg(feature = "serde")]
-const _: () = {
-  use serde::{Deserializer, Serializer};
-  #[derive(Deserialize)]
-  #[serde(rename_all = "camelCase")]
-  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
-  struct MarginTableFields {
-    description: SmolStr,
-    margin_tiers: Vec<MarginTier>,
-  }
-
-  #[derive(Serialize)]
-  #[serde(rename_all = "camelCase")]
-  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
-  struct MarginTableFieldsRef<'a> {
-    description: &'a str,
-    margin_tiers: &'a [MarginTier],
-  }
-
-  impl<'de> Deserialize<'de> for MarginTable {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-      D: Deserializer<'de>,
-    {
-      let (id, fields) = <(MarginTableId, MarginTableFields)>::deserialize(deserializer)?;
-      Ok(MarginTable {
-        id,
-        description: fields.description,
-        margin_tiers: fields.margin_tiers,
-      })
-    }
-  }
-
-  impl Serialize for MarginTable {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-      S: Serializer,
-    {
-      let fields = MarginTableFieldsRef {
-        description: &self.description,
-        margin_tiers: &self.margin_tiers,
-      };
-      (self.id, fields).serialize(serializer)
-    }
-  }
-};
 
 impl MarginTable {
   /// Returns the ID of the margin table.
@@ -600,6 +553,16 @@ pub struct Meta {
 }
 
 impl Meta {
+  /// Creates an empty instance of `Meta` with no assets, no margin tables, and a default collateral token index of 0.
+  #[inline(always)]
+  pub const fn empty() -> Self {
+    Self {
+      universe: Vec::new(),
+      margin_tables: Vec::new(),
+      collateral_token: 0,
+    }
+  }
+
   /// Returns a reference to the universe of assets.
   #[inline(always)]
   pub const fn universe(&self) -> &[AssetMeta] {
@@ -1038,15 +1001,160 @@ impl AssetContext {
   }
 }
 
-/// Represents either derivatives metadata or asset contexts.
-#[derive(Debug, Clone, IsVariant, Unwrap, TryUnwrap, From)]
-#[unwrap(ref, ref_mut)]
-#[try_unwrap(ref, ref_mut)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-pub enum MetaOrAssetContexts {
+/// Represents the metadata and asset contexts for derivatives.
+#[derive(Debug, Clone)]
+pub struct MetaAndAssetContexts {
   /// Represents derivatives metadata.
-  Meta(Meta),
+  meta: Meta,
   /// Represents asset contexts.
-  Contexts(Vec<AssetContext>),
+  contexts: Vec<AssetContext>,
 }
+
+impl From<MetaAndAssetContexts> for Meta {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    value.meta
+  }
+}
+
+impl From<MetaAndAssetContexts> for Vec<AssetContext> {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    value.contexts
+  }
+}
+
+impl From<MetaAndAssetContexts> for (Meta, Vec<AssetContext>) {
+  #[inline(always)]
+  fn from(value: MetaAndAssetContexts) -> Self {
+    (value.meta, value.contexts)
+  }
+}
+
+impl MetaAndAssetContexts {
+  /// Creates an empty instance of `MetaAndAssetContexts` with an empty meta and no asset contexts.
+  #[inline(always)]
+  pub const fn empty() -> Self {
+    Self::new(Meta::empty(), Vec::new())
+  }
+
+  /// Creates a new instance of `MetaAndAssetContexts` with the given meta and asset contexts.
+  #[inline(always)]
+  pub const fn new(meta: Meta, contexts: Vec<AssetContext>) -> Self {
+    Self { meta, contexts }
+  }
+
+  /// Returns a reference to the meta field.
+  #[inline(always)]
+  pub const fn meta(&self) -> &Meta {
+    &self.meta
+  }
+
+  /// Returns a mutable reference to the meta field.
+  #[inline(always)]
+  pub fn meta_mut(&mut self) -> &mut Meta {
+    &mut self.meta
+  }
+
+  /// Returns a reference to the contexts field.
+  #[inline(always)]
+  pub const fn contexts(&self) -> &[AssetContext] {
+    self.contexts.as_slice()
+  }
+
+  /// Returns a mutable reference to the contexts field.
+  #[inline(always)]
+  pub const fn contexts_mut(&mut self) -> &mut [AssetContext] {
+    self.contexts.as_mut_slice()
+  }
+
+  /// Takes the asset contexts out of the `MetaAndAssetContexts` instance, leaving an empty vector in its place.
+  #[inline(always)]
+  pub fn take_contexts(&mut self) -> Vec<AssetContext> {
+    take(&mut self.contexts)
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns the contained `Meta`.
+  #[inline(always)]
+  pub fn into_meta(self) -> Meta {
+    self.into()
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns the contained asset contexts.
+  #[inline(always)]
+  pub fn into_contexts(self) -> Vec<AssetContext> {
+    self.into()
+  }
+
+  /// Consumes the `MetaAndAssetContexts` instance and returns both the contained `Meta` and asset contexts.
+  #[inline(always)]
+  pub fn into_parts(self) -> (Meta, Vec<AssetContext>) {
+    self.into()
+  }
+}
+
+#[cfg(feature = "serde")]
+const _: () = {
+  use serde::{Deserializer, Serializer};
+  #[derive(Deserialize)]
+  #[serde(rename_all = "camelCase")]
+  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
+  struct MarginTableFields {
+    description: SmolStr,
+    margin_tiers: Vec<MarginTier>,
+  }
+
+  #[derive(Serialize)]
+  #[serde(rename_all = "camelCase")]
+  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
+  struct MarginTableFieldsRef<'a> {
+    description: &'a str,
+    margin_tiers: &'a [MarginTier],
+  }
+
+  impl<'de> Deserialize<'de> for MarginTable {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: Deserializer<'de>,
+    {
+      let (id, fields) = <(MarginTableId, MarginTableFields)>::deserialize(deserializer)?;
+      Ok(MarginTable {
+        id,
+        description: fields.description,
+        margin_tiers: fields.margin_tiers,
+      })
+    }
+  }
+
+  impl Serialize for MarginTable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: Serializer,
+    {
+      let fields = MarginTableFieldsRef {
+        description: &self.description,
+        margin_tiers: &self.margin_tiers,
+      };
+      (self.id, fields).serialize(serializer)
+    }
+  }
+
+  impl<'de> Deserialize<'de> for MetaAndAssetContexts {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: Deserializer<'de>,
+    {
+      <(Meta, Vec<AssetContext>)>::deserialize(deserializer)
+        .map(|(meta, contexts)| Self::new(meta, contexts))
+    }
+  }
+
+  impl Serialize for MetaAndAssetContexts {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: Serializer,
+    {
+      (&self.meta, &self.contexts).serialize(serializer)
+    }
+  }
+};

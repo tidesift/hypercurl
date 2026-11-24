@@ -130,7 +130,7 @@ where
   }
 
   /// Sends a request to retrieve the meta and asset contexts.
-  pub async fn meta_and_asset_ctxs(&self) -> Result<Vec<derivatives::meta::MetaOrAssetContexts>> {
+  pub async fn meta_and_asset_ctxs(&self) -> Result<derivatives::meta::MetaAndAssetContexts> {
     self.request(META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 
@@ -140,7 +140,7 @@ where
   }
 
   /// Sends a request to retrieve the spot metadata and asset contexts.
-  pub async fn spot_meta_and_asset_ctxs(&self) -> Result<Vec<spot::meta::MetaOrAssetContexts>> {
+  pub async fn spot_meta_and_asset_ctxs(&self) -> Result<spot::meta::MetaAndAssetContexts> {
     self.request(SPOT_META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 }
