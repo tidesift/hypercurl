@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 rust-version = "1.95"
 keywords = ["template"]
 categories = ["no-std", "no-std::no-alloc"]
-exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml"]
+exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml", "/postman/"]
 
 [features]
 default = []
