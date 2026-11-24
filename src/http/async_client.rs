@@ -95,6 +95,12 @@ impl<E, Url> AsyncClient<E, Url> {
   pub const fn url(&self) -> &Url {
     &self.url
   }
+
+  /// Returns a mutable reference to the URL of the client instance.
+  #[inline(always)]
+  pub const fn url_mut(&mut self) -> &mut Url {
+    &mut self.url
+  }
 }
 
 impl<E, Url> AsyncClient<E, Url>
@@ -132,6 +138,22 @@ where
   /// Sends a request to retrieve the meta and asset contexts.
   pub async fn meta_and_asset_ctxs(&self) -> Result<derivatives::meta::MetaAndAssetContexts> {
     self.request(META_AND_ASSET_CTXS_REQUEST_BODY).await
+  }
+
+  /// Sends a request to retrieve the meta and asset contexts.
+  pub async fn meta_and_asset_ctxs_with_dex<D>(
+    &self,
+    dex: D,
+  ) -> Result<Option<derivatives::meta::MetaAndAssetContexts>>
+  where
+    D: AsRef<str>,
+  {
+    self
+      .request(format!(
+        "{{\"type\":\"metaAndAssetCtxs\",\"dex\":\"{}\"}}",
+        dex.as_ref()
+      ))
+      .await
   }
 
   /// Sends a request to retrieve the spot metadata.
