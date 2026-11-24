@@ -1,4 +1,5 @@
 #[path = "info/spot/mod.rs"]
 mod spot;
 
-const ENDPOINT: &str = "https://api.hyperliquid.xyz/info";
+#[path = "info/derivatives/mod.rs"]
+mod derivatives;

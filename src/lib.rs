@@ -15,8 +15,8 @@ pub mod info;
 pub mod exchange;
 
 /// The http client and related utilities for the hyperliquid core API.
-#[cfg(feature = "reqwest")]
-#[cfg_attr(docsrs, doc(cfg(feature = "reqwest")))]
+#[cfg(any(feature = "reqwest", feature = "ureq"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "reqwest", feature = "ureq"))))]
 pub mod http;
 
 mod req;
