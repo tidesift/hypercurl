@@ -1,14 +1,7 @@
 #![doc = include_str!("../README.md")]
-#![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 #![deny(missing_docs)]
-
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
-extern crate alloc as std;
-
-#[cfg(feature = "std")]
-extern crate std;
 
 /// The version of this crate, as `Cargo.toml` declares it.
 ///
@@ -17,6 +10,16 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// The data structures for the hyperliquid core API info.
 pub mod info;
+
+/// The data structures for the hyperliquid core API exchange.
+pub mod exchange;
+
+/// The http client and related utilities for the hyperliquid core API.
+#[cfg(feature = "reqwest")]
+#[cfg_attr(docsrs, doc(cfg(feature = "reqwest")))]
+pub mod http;
+
+mod req;
 
 #[cfg(test)]
 mod tests;

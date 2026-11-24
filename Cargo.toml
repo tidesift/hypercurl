@@ -6,25 +6,35 @@ repository = "https://github.com/al8n/hypercurl"
 documentation = "https://docs.rs/hypercurl"
 description = "A template for creating Rust open-source repo on GitHub"
 license = "MIT OR Apache-2.0"
-rust-version = "1.85"
+rust-version = "1.95"
 keywords = ["template"]
 categories = ["no-std", "no-std::no-alloc"]
 exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml"]
 
 [features]
-default = ["std"]
-std = ["thiserror/std", "serde?/default"]
-alloc = ["serde?/alloc"]
+default = []
+
+serde = ["dep:serde", "smol_str/serde", "alloy-primitives/serde", "jiff/serde"]
+http = ["dep:http"]
+reqwest = ["dep:reqwest", "serde"]
 
 [dependencies]
+alloy-primitives = { version = "1.7" }
 derive_more = { version = "2", default-features = false, features = ["is_variant", "display", "unwrap", "try_unwrap"] }
+smol_str = "0.3"
 
-serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
-thiserror = { version = "2", default-features = false }
+jiff = { version = "1" }
+reqwest = { version = "0.13", optional = true, features = ["json"] }
+http = { version = "1", optional = true }
+
+serde = { version = "1", optional = true, features = ["derive"] }
+thiserror = "2"
 
 
 [dev-dependencies]
 criterion = "0.8"
+reqwest = { version = "0.13", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
 
 [lints]
 workspace = true
