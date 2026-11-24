@@ -15,8 +15,10 @@ exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml"]
 default = []
 
 serde = ["dep:serde", "smol_str/serde", "alloy-primitives/serde", "jiff/serde"]
-http = ["dep:http"]
+strict-serde = ["serde"]
+
 reqwest = ["dep:reqwest", "serde"]
+ureq = ["dep:ureq", "serde"]
 
 [dependencies]
 alloy-primitives = { version = "1.7" }
@@ -25,7 +27,7 @@ smol_str = "0.3"
 
 jiff = { version = "1" }
 reqwest = { version = "0.13", optional = true, features = ["json"] }
-http = { version = "1", optional = true }
+ureq = { version = "3", optional = true, features = ["json"] }
 
 serde = { version = "1", optional = true, features = ["derive"] }
 thiserror = "2"

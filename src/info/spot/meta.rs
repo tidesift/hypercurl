@@ -1,25 +1,18 @@
 use core::mem::take;
 use std::vec::Vec;
 
-use alloy_primitives::B128;
+use alloy_primitives::{Address, B128};
 use derive_more::{From, IsVariant, TryUnwrap, Unwrap};
 use smol_str::SmolStr;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// The default body of the spot metadata request.
-pub const DEFAULT_META_REQUEST_BODY: &str = r#"{"type":"spotMeta"}"#;
-
-/// The default body of the spot meta and asset contexts request.
-pub const DEFAULT_META_AND_ASSET_CTXS_REQUEST_BODY: &str = r#"{"type":"spotMetaAndAssetCtxs"}"#;
-
-const CONTENT_TYPE: &str = r#"application/json"#;
-
 /// The metadata for a spot asset in the hyperliquid core API.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct AssetMeta {
   tokens: [usize; 2],
   name: SmolStr,
@@ -120,10 +113,82 @@ impl AssetMeta {
   }
 }
 
-/// The token information for a spot.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+/// Evm contract information.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
+pub struct EvmContract {
+  address: Address,
+  #[cfg_attr(feature = "serde", serde(rename = "evm_extra_wei_decimals"))]
+  extra_wei_decimals: isize,
+}
+
+impl EvmContract {
+  /// Returns an empty `EvmContract` instance with empty values.
+  #[inline(always)]
+  pub const fn empty() -> Self {
+    Self {
+      address: Address::new([0; 20]),
+      extra_wei_decimals: 0,
+    }
+  }
+
+  /// Creates a new `EvmContract` instance with the specified address and extra wei decimals.
+  #[inline(always)]
+  pub const fn new(address: Address, extra_wei_decimals: isize) -> Self {
+    Self {
+      address,
+      extra_wei_decimals,
+    }
+  }
+
+  /// Returns the address of the EVM contract.
+  #[inline(always)]
+  pub const fn address(&self) -> Address {
+    self.address
+  }
+
+  /// Sets the address of the EVM contract and returns a modified instance.
+  #[inline(always)]
+  pub const fn with_address(mut self, address: Address) -> Self {
+    self.address = address;
+    self
+  }
+
+  /// Sets the address of the EVM contract and returns a mutable reference to self.
+  #[inline(always)]
+  pub const fn set_address(&mut self, address: Address) -> &mut Self {
+    self.address = address;
+    self
+  }
+
+  /// Returns the extra wei decimals of the EVM contract.
+  #[inline(always)]
+  pub const fn extra_wei_decimals(&self) -> isize {
+    self.extra_wei_decimals
+  }
+
+  /// Sets the extra wei decimals of the EVM contract and returns a mutable reference to self.
+  #[inline(always)]
+  pub const fn set_extra_wei_decimals(&mut self, extra_wei_decimals: isize) -> &mut Self {
+    self.extra_wei_decimals = extra_wei_decimals;
+    self
+  }
+
+  /// Sets the extra wei decimals of the EVM contract and returns a modified instance.
+  #[inline(always)]
+  pub const fn with_extra_wei_decimals(mut self, extra_wei_decimals: isize) -> Self {
+    self.extra_wei_decimals = extra_wei_decimals;
+    self
+  }
+}
+
+/// The token information for a spot.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct TokenInfo {
   name: SmolStr,
   sz_decimals: u8,
@@ -131,6 +196,22 @@ pub struct TokenInfo {
   index: usize,
   token_id: B128,
   is_canonical: bool,
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Option::is_none", default)
+  )]
+  evm_contract: Option<EvmContract>,
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Option::is_none", default)
+  )]
+  full_name: Option<SmolStr>,
+  deployer_trading_fee_share: SmolStr,
+  #[cfg_attr(
+    feature = "serde",
+    serde(skip_serializing_if = "Option::is_none", default)
+  )]
+  deployer_label: Option<SmolStr>,
 }
 
 impl TokenInfo {
@@ -144,6 +225,10 @@ impl TokenInfo {
       index: 0,
       token_id: B128::new([0; 16]),
       is_canonical: false,
+      evm_contract: None,
+      full_name: None,
+      deployer_trading_fee_share: SmolStr::new_inline(""),
+      deployer_label: None,
     }
   }
 
@@ -266,12 +351,96 @@ impl TokenInfo {
     self.is_canonical = is_canonical;
     self
   }
+
+  /// Returns the EVM contract associated with the token, if any.
+  #[inline(always)]
+  pub const fn evm_contract(&self) -> Option<&EvmContract> {
+    self.evm_contract.as_ref()
+  }
+
+  /// Sets the EVM contract and returns a mutable reference to self.
+  #[inline(always)]
+  pub const fn set_evm_contract(&mut self, evm_contract: Option<EvmContract>) -> &mut Self {
+    self.evm_contract = evm_contract;
+    self
+  }
+
+  /// Sets the EVM contract and returns a new instance of `TokenInfo`.
+  #[inline(always)]
+  pub const fn with_evm_contract(mut self, evm_contract: Option<EvmContract>) -> Self {
+    self.evm_contract = evm_contract;
+    self
+  }
+
+  /// Returns the full name of the token, if any.
+  #[inline(always)]
+  pub const fn full_name(&self) -> Option<&SmolStr> {
+    self.full_name.as_ref()
+  }
+
+  /// Sets the full name of the token and returns a mutable reference to self.
+  #[inline(always)]
+  pub fn set_full_name(&mut self, full_name: Option<impl Into<SmolStr>>) -> &mut Self {
+    self.full_name = full_name.map(Into::into);
+    self
+  }
+
+  /// Sets the full name of the token and returns a new instance of `TokenInfo`.
+  #[inline(always)]
+  pub fn with_full_name(mut self, full_name: Option<impl Into<SmolStr>>) -> Self {
+    self.full_name = full_name.map(Into::into);
+    self
+  }
+
+  /// Returns the deployer trading fee share associated with the token.
+  #[inline(always)]
+  pub const fn deployer_trading_fee_share(&self) -> &SmolStr {
+    &self.deployer_trading_fee_share
+  }
+
+  /// Sets the deployer trading fee share and returns a mutable reference to self.
+  #[inline(always)]
+  pub fn set_deployer_trading_fee_share(
+    &mut self,
+    deployer_trading_fee_share: SmolStr,
+  ) -> &mut Self {
+    self.deployer_trading_fee_share = deployer_trading_fee_share;
+    self
+  }
+
+  /// Sets the deployer trading fee share and returns a new instance of `TokenInfo`.
+  #[inline(always)]
+  pub fn with_deployer_trading_fee_share(mut self, deployer_trading_fee_share: SmolStr) -> Self {
+    self.deployer_trading_fee_share = deployer_trading_fee_share;
+    self
+  }
+
+  /// Returns the deployer label associated with the token, if any.
+  #[inline(always)]
+  pub const fn deployer_label(&self) -> Option<&SmolStr> {
+    self.deployer_label.as_ref()
+  }
+
+  /// Sets the deployer label and returns a mutable reference to self.
+  #[inline(always)]
+  pub fn set_deployer_label(&mut self, deployer_label: Option<impl Into<SmolStr>>) -> &mut Self {
+    self.deployer_label = deployer_label.map(Into::into);
+    self
+  }
+
+  /// Sets the deployer label and returns a new instance of `TokenInfo`.
+  #[inline(always)]
+  pub fn with_deployer_label(mut self, deployer_label: Option<impl Into<SmolStr>>) -> Self {
+    self.deployer_label = deployer_label.map(Into::into);
+    self
+  }
 }
 
 /// The metadata associated with a spot.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct Meta {
   universe: Vec<AssetMeta>,
   tokens: Vec<TokenInfo>,
@@ -355,9 +524,10 @@ impl Meta {
 }
 
 /// The asset context for a spot asset.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct AssetContext {
   prev_day_px: SmolStr,
   day_ntl_vlm: SmolStr,
@@ -556,116 +726,9 @@ impl AssetContext {
 #[try_unwrap(ref, ref_mut)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
-pub enum MetaAndAssetContexts {
+pub enum MetaOrAssetContexts {
   /// Represents spot metadata.
   Meta(Meta),
   /// Represents asset contexts.
-  Context(Vec<AssetContext>),
+  Contexts(Vec<AssetContext>),
 }
-
-/// Represents a request for spot metadata.
-pub struct MetaRequest<Endpoint = &'static str> {
-  endpoint: Endpoint,
-}
-
-impl Default for MetaRequest<&'static str> {
-  #[inline(always)]
-  fn default() -> Self {
-    Self {
-      endpoint: super::DEFAULT_ENDPOINT,
-    }
-  }
-}
-
-impl<E> MetaRequest<E> {
-  /// Creates a new `MetaRequest` with the specified endpoint.
-  #[inline(always)]
-  pub const fn new(endpoint: E) -> Self {
-    Self { endpoint }
-  }
-
-  /// Returns the endpoint of the request.
-  #[inline(always)]
-  pub const fn endpoint(&self) -> &E {
-    &self.endpoint
-  }
-
-  /// Returns a mutable reference to the endpoint of the request.
-  #[inline(always)]
-  pub const fn endpoint_mut(&mut self) -> &mut E {
-    &mut self.endpoint
-  }
-}
-
-/// Represents a request for spot metadata and asset contexts.
-pub struct MetaAndAssetContextsRequest<Endpoint = &'static str> {
-  endpoint: Endpoint,
-}
-
-impl Default for MetaAndAssetContextsRequest<&'static str> {
-  #[inline(always)]
-  fn default() -> Self {
-    Self {
-      endpoint: super::DEFAULT_ENDPOINT,
-    }
-  }
-}
-
-impl<E> MetaAndAssetContextsRequest<E> {
-  /// Creates a new `MetaAndAssetContextsRequest` with the specified endpoint.
-  #[inline(always)]
-  pub const fn new(endpoint: E) -> Self {
-    Self { endpoint }
-  }
-
-  /// Returns the endpoint of the request.
-  #[inline(always)]
-  pub const fn endpoint(&self) -> &E {
-    &self.endpoint
-  }
-
-  /// Returns a mutable reference to the endpoint of the request.
-  #[inline(always)]
-  pub const fn endpoint_mut(&mut self) -> &mut E {
-    &mut self.endpoint
-  }
-}
-
-#[cfg(feature = "reqwest")]
-const _: () = {
-  use reqwest::{Client, Error, IntoUrl};
-
-  impl<E> MetaRequest<E>
-  where
-    E: IntoUrl,
-  {
-    /// Sends the request using `reqwest` and returns the response.
-    pub async fn reqwest(self) -> Result<Meta, Error> {
-      Client::new()
-        .post(self.endpoint)
-        .header("content-type", CONTENT_TYPE)
-        .body(DEFAULT_META_REQUEST_BODY)
-        .send()
-        .await?
-        .json::<Meta>()
-        .await
-    }
-  }
-
-  impl<E> MetaAndAssetContextsRequest<E>
-  where
-    E: IntoUrl,
-  {
-    /// Sends the request using `reqwest` and returns the response.
-    pub async fn reqwest(self) -> Result<Vec<MetaAndAssetContexts>, Error> {
-      Client::new()
-        .post(self.endpoint)
-        .header("content-type", CONTENT_TYPE)
-        .body(DEFAULT_META_AND_ASSET_CTXS_REQUEST_BODY)
-        .send()
-        .await?
-        .json::<Vec<MetaAndAssetContexts>>()
-        .await
-    }
-  }
-};

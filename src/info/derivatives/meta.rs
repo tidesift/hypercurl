@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct MarginTier {
   lower_bound: SmolStr,
   max_leverage: usize,
@@ -105,24 +106,137 @@ impl MarginTableId {
 
 /// The margin table fields
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct MarginTableFields {
+pub struct MarginTable {
+  id: MarginTableId,
   description: SmolStr,
   margin_tiers: Vec<MarginTier>,
 }
 
-/// The margin table for derivatives trading.
-#[derive(Debug, Clone, PartialEq, Eq, IsVariant, Unwrap, TryUnwrap, From)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-#[unwrap(ref, ref_mut)]
-#[try_unwrap(ref, ref_mut)]
-pub enum MarginTable {
-  /// The ID of the margin table.
-  Id(MarginTableId),
-  /// The fields of the margin table.
-  Fields(MarginTableFields),
+#[cfg(feature = "serde")]
+const _: () = {
+  use serde::{Deserializer, Serializer};
+  #[derive(Deserialize)]
+  #[serde(rename_all = "camelCase")]
+  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
+  struct MarginTableFields {
+    description: SmolStr,
+    margin_tiers: Vec<MarginTier>,
+  }
+
+  #[derive(Serialize)]
+  #[serde(rename_all = "camelCase")]
+  #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
+  struct MarginTableFieldsRef<'a> {
+    description: &'a str,
+    margin_tiers: &'a [MarginTier],
+  }
+
+  impl<'de> Deserialize<'de> for MarginTable {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: Deserializer<'de>,
+    {
+      let (id, fields) = <(MarginTableId, MarginTableFields)>::deserialize(deserializer)?;
+      Ok(MarginTable {
+        id,
+        description: fields.description,
+        margin_tiers: fields.margin_tiers,
+      })
+    }
+  }
+
+  impl Serialize for MarginTable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: Serializer,
+    {
+      let fields = MarginTableFieldsRef {
+        description: &self.description,
+        margin_tiers: &self.margin_tiers,
+      };
+      (self.id, fields).serialize(serializer)
+    }
+  }
+};
+
+impl MarginTable {
+  /// Returns the ID of the margin table.
+  #[inline(always)]
+  pub const fn id(&self) -> MarginTableId {
+    self.id
+  }
+
+  /// Sets the ID of the margin table and returns a new instance.
+  #[inline(always)]
+  pub const fn with_id(mut self, id: MarginTableId) -> Self {
+    self.id = id;
+    self
+  }
+
+  /// Sets the ID of the margin table and returns a mutable reference to self.
+  #[inline(always)]
+  pub const fn set_id(&mut self, id: MarginTableId) -> &mut Self {
+    self.id = id;
+    self
+  }
+
+  /// Returns the description of the margin table.
+  #[inline(always)]
+  pub const fn description(&self) -> &SmolStr {
+    &self.description
+  }
+
+  /// Sets the description of the margin table and returns a new instance.
+  #[inline(always)]
+  pub fn with_description(mut self, description: impl Into<SmolStr>) -> Self {
+    self.description = description.into();
+    self
+  }
+
+  /// Sets the description of the margin table and returns a mutable reference to self.
+  #[inline(always)]
+  pub fn set_description(&mut self, description: impl Into<SmolStr>) -> &mut Self {
+    self.description = description.into();
+    self
+  }
+
+  /// Returns the margin tiers of the margin table.
+  #[inline(always)]
+  pub const fn margin_tiers(&self) -> &[MarginTier] {
+    self.margin_tiers.as_slice()
+  }
+
+  /// Returns a mutable slice of the margin tiers of the margin table.
+  #[inline(always)]
+  pub const fn margin_tiers_mut(&mut self) -> &mut [MarginTier] {
+    self.margin_tiers.as_mut_slice()
+  }
+
+  /// Takes the margin tiers of the margin table, leaving an empty vector in its place.
+  #[inline(always)]
+  pub fn take_margin_tiers(&mut self) -> Vec<MarginTier> {
+    take(&mut self.margin_tiers)
+  }
+
+  /// Consumes the margin table and returns its margin tiers.
+  #[inline(always)]
+  pub fn into_margin_tiers(self) -> Vec<MarginTier> {
+    self.margin_tiers
+  }
+
+  /// Sets the margin tiers of the margin table and returns a new instance.
+  #[inline(always)]
+  pub fn with_margin_tiers(mut self, margin_tiers: Vec<MarginTier>) -> Self {
+    self.margin_tiers = margin_tiers;
+    self
+  }
+
+  /// Sets the margin tiers of the margin table and returns a mutable reference to self.
+  #[inline(always)]
+  pub fn set_margin_tiers(&mut self, margin_tiers: Vec<MarginTier>) -> &mut Self {
+    self.margin_tiers = margin_tiers;
+    self
+  }
 }
 
 /// Growth mode for a perpetual market.
@@ -174,6 +288,7 @@ impl MarginMode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct AssetMeta {
   sz_decimals: u32,
   name: SmolStr,
@@ -477,6 +592,7 @@ impl AssetMeta {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct Meta {
   universe: Vec<AssetMeta>,
   margin_tables: Vec<MarginTable>,
@@ -673,6 +789,7 @@ mod impact_price_serde {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct AssetContext {
   prev_day_px: SmolStr,
   day_ntl_vlm: SmolStr,
@@ -919,4 +1036,17 @@ impl AssetContext {
     self.day_base_vlm = day_base_vlm.into();
     self
   }
+}
+
+/// Represents either derivatives metadata or asset contexts.
+#[derive(Debug, Clone, IsVariant, Unwrap, TryUnwrap, From)]
+#[unwrap(ref, ref_mut)]
+#[try_unwrap(ref, ref_mut)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
+pub enum MetaOrAssetContexts {
+  /// Represents derivatives metadata.
+  Meta(Meta),
+  /// Represents asset contexts.
+  Contexts(Vec<AssetContext>),
 }
