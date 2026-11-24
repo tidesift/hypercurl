@@ -1,34 +1,35 @@
 [package]
-name = "template-rs"
+name = "hypercurl"
 version = "0.0.0"
 edition = "2024"
-repository = "https://github.com/al8n/template-rs"
-homepage = "https://github.com/al8n/template-rs"
-documentation = "https://docs.rs/template-rs"
+repository = "https://github.com/al8n/hypercurl"
+documentation = "https://docs.rs/hypercurl"
 description = "A template for creating Rust open-source repo on GitHub"
 license = "MIT OR Apache-2.0"
 rust-version = "1.85"
-readme = "README.md"
 keywords = ["template"]
 categories = ["no-std", "no-std::no-alloc"]
 exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml"]
 
-# The tiers. With no feature the crate is `no_std` and allocates nothing; `alloc` adds the heap
-# types and `std` the standard library, and the two are independent: `std` does not imply `alloc`.
-# All four combinations are valid builds, and `ci.yml` builds and tests each of them. A feature
-# for an optional dependency turns that dependency on and nothing else (`x = ["dep:x"]`), and each
-# tier forwards to it weakly (`std = ["x?/std"]`, `alloc = ["x?/alloc"]`).
 [features]
 default = ["std"]
-std = []
-alloc = []
+std = ["thiserror/std", "serde?/default"]
+alloc = ["serde?/alloc"]
 
 [dependencies]
+derive_more = { version = "2", default-features = false, features = ["is_variant", "display", "unwrap", "try_unwrap"] }
+
+serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
+thiserror = { version = "2", default-features = false }
+
 
 [dev-dependencies]
 criterion = "0.8"
 
-[lints.rust]
+[lints]
+workspace = true
+
+[workspace.lints.rust]
 rust_2018_idioms = "warn"
 single_use_lifetimes = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs)'] }
