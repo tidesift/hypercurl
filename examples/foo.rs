@@ -1,3 +1,3 @@
 fn main() {
-  println!("{} {}", env!("CARGO_PKG_NAME"), template_rs::VERSION);
+  println!("{} {}", env!("CARGO_PKG_NAME"), hypercurl::VERSION);
 }

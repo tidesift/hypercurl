@@ -103,8 +103,8 @@ jobs:
           version=$(jq -r '.[0].version' <<<"$packages")
           tag="v$version"
 
-          [[ "$name" != template-rs ]] \
-            || fail "the package is still named template-rs. Rename it in Cargo.toml before releasing; the README lists what else carries the name."
+          [[ "$name" != hypercurl ]] \
+            || fail "the package is still named hypercurl. Rename it in Cargo.toml before releasing; the README lists what else carries the name."
           [[ "$version" != 0.0.0 ]] \
             || fail "0.0.0 is the placeholder version. It is published by hand to reserve the name (see the header of release.yml); release 0.1.0 or later through this workflow."
 

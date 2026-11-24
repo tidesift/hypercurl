@@ -15,24 +15,8 @@ extern crate std;
 /// This is the core tier: it needs neither `std` nor `alloc`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// The name of this crate, as an owned string.
-///
-/// This is the heap tier, available with `std` or with `alloc`. Heap types are spelled through
-/// `std::`: with `alloc` and without `std` that name is the `alloc` crate.
-#[cfg(any(feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "std", feature = "alloc"))))]
-pub fn name() -> std::string::String {
-  std::string::String::from(env!("CARGO_PKG_NAME"))
-}
-
-/// The operating system this crate was built for, such as `"linux"` or `"macos"`.
-///
-/// This is the `std` tier: it exists only with the standard library.
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-pub fn target_os() -> &'static str {
-  std::env::consts::OS
-}
+/// The data structures for the hyperliquid core API info.
+pub mod info;
 
 #[cfg(test)]
 mod tests;
