@@ -1,13 +1,13 @@
 use alloy_primitives::Address;
 use smol_str::SmolStr;
 
-use derive_more::{AsMut, AsRef, Deref, DerefMut, From, Into};
+use derive_more::Into;
 use triomphe::Arc;
 
 use super::sub_deployer::SubDeployer;
 
 #[cfg(feature = "serde")]
-use crate::utils::serde_triomphe_array;
+use crate::{http::ResponseData, utils::serde_triomphe_array};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -266,10 +266,6 @@ impl Dex {
   }
 }
 
-/// A collection of perpetual DEXes.
-#[derive(Debug, Clone, From, Into, AsRef, Deref, AsMut, DerefMut)]
-pub struct Dexs(Vec<Dex>);
-
 #[cfg(feature = "serde")]
 const _: () = {
   use serde::{
@@ -304,7 +300,7 @@ const _: () = {
     }
   }
 
-  impl Serialize for Dexs {
+  impl Serialize for ResponseData<Vec<Dex>> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
       S: Serializer,
@@ -321,7 +317,7 @@ const _: () = {
   struct DexsVisitor;
 
   impl<'de> Visitor<'de> for DexsVisitor {
-    type Value = Dexs;
+    type Value = Vec<Dex>;
 
     fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
       formatter.write_str("a sequence of optional Dex elements")
@@ -342,16 +338,16 @@ const _: () = {
       while let Some(dex) = seq.next_element()? {
         dexes.push(dex);
       }
-      Ok(Dexs(dexes))
+      Ok(dexes)
     }
   }
 
-  impl<'de> Deserialize<'de> for Dexs {
+  impl<'de> Deserialize<'de> for ResponseData<Vec<Dex>> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
       D: Deserializer<'de>,
     {
-      deserializer.deserialize_seq(DexsVisitor)
+      deserializer.deserialize_seq(DexsVisitor).map(ResponseData)
     }
   }
 };

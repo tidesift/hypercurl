@@ -551,6 +551,9 @@ impl MetaAndAssetContexts {
 const _: () = {
   use crate::utils::serde_triomphe_array;
   use serde::{Deserializer, Serializer};
+
+  crate::http::serde_response_data!(@forward MetaAndAssetContexts, Meta);
+
   #[derive(Deserialize)]
   #[serde(rename_all = "camelCase")]
   #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]

@@ -408,6 +408,8 @@ impl MetaAndAssetContexts {
 const _: () = {
   use serde::{Deserializer, Serializer};
 
+  crate::http::serde_response_data!(@forward MetaAndAssetContexts, Meta);
+
   impl<'de> Deserialize<'de> for MetaAndAssetContexts {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
