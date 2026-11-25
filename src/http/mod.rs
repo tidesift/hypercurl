@@ -20,6 +20,8 @@ pub const SPOT_META_AND_ASSET_CTXS_REQUEST_BODY: &str = r#"{"type":"spotMetaAndA
 pub const META_REQUEST_BODY: &str = r#"{"type":"meta"}"#;
 /// The body of the meta and asset contexts request.
 pub const META_AND_ASSET_CTXS_REQUEST_BODY: &str = r#"{"type":"metaAndAssetCtxs"}"#;
+/// The body of the perpetual DEXs request.
+pub const PERP_DEXS_REQUEST_BODY: &str = r#"{"type":"perpDexs"}"#;
 
 mod sealed {
   pub trait Endpoint {}

@@ -21,5 +21,7 @@ pub mod http;
 
 mod req;
 
+mod utils;
+
 #[cfg(test)]
 mod tests;

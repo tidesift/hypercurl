@@ -156,6 +156,11 @@ where
       .await
   }
 
+  /// Sends a request to retrieve the perpetual DEXs.
+  pub async fn perp_dexs(&self) -> Result<derivatives::perp_dex::Dexs> {
+    self.request(PERP_DEXS_REQUEST_BODY).await
+  }
+
   /// Sends a request to retrieve the spot metadata.
   pub async fn spot_meta(&self) -> Result<spot::meta::Meta> {
     self.request(SPOT_META_REQUEST_BODY).await

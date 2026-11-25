@@ -14,7 +14,7 @@ exclude = ["/.github/", "/ci/", "/.codecov.yml", "/deny.toml", "/postman/"]
 [features]
 default = []
 
-serde = ["dep:serde", "smol_str/serde", "alloy-primitives/serde", "jiff/serde"]
+serde = ["dep:serde", "smol_str/serde", "alloy-primitives/serde", "jiff/serde", "either/serde", "triomphe/serde"]
 strict-serde = ["serde"]
 
 reqwest = ["dep:reqwest", "serde"]
@@ -22,8 +22,12 @@ ureq = ["dep:ureq", "serde"]
 
 [dependencies]
 alloy-primitives = { version = "1.7" }
+either = "1"
 derive_more = { version = "2", default-features = false, features = ["is_variant", "display", "unwrap", "try_unwrap"] }
+
+paste = { package = "pastey", version = "0.2" }
 smol_str = "0.3"
+triomphe = "0.1"
 
 jiff = { version = "1" }
 reqwest = { version = "0.13", optional = true, features = ["json"] }
@@ -37,6 +41,7 @@ thiserror = "2"
 criterion = "0.8"
 reqwest = { version = "0.13", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
+serde_json = "1"
 
 [lints]
 workspace = true
