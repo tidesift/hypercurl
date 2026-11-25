@@ -24,7 +24,7 @@ async fn meta_and_asset_contexts_with_dex(client: AsyncClient, dex: &str, exist:
     .meta_and_asset_ctxs_with_dex(dex)
     .await
     .unwrap();
-  assert_eq!(result.is_some(), exist);
+  assert_eq!(result.body().is_some(), exist);
 }
 
 #[tokio::test]

@@ -131,57 +131,82 @@ where
   Url: IntoUrl + Clone,
 {
   /// Sends a meta request to retrieve the spot metadata.
-  pub async fn meta(&self) -> Result<derivatives::meta::Meta> {
-    self.request(META_REQUEST_BODY).await
+  pub async fn meta(&self) -> Result<Response<derivatives::meta::Meta>> {
+    self.call(META_REQUEST_BODY).await
   }
 
   /// Sends a request to retrieve the meta and asset contexts.
-  pub async fn meta_and_asset_ctxs(&self) -> Result<derivatives::meta::MetaAndAssetContexts> {
-    self.request(META_AND_ASSET_CTXS_REQUEST_BODY).await
+  pub async fn meta_and_asset_ctxs(
+    &self,
+  ) -> Result<Response<derivatives::meta::MetaAndAssetContexts>> {
+    self.call(META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 
   /// Sends a request to retrieve the meta and asset contexts.
   pub async fn meta_and_asset_ctxs_with_dex<D>(
     &self,
     dex: D,
-  ) -> Result<Option<derivatives::meta::MetaAndAssetContexts>>
+  ) -> Result<Response<Option<derivatives::meta::MetaAndAssetContexts>>>
   where
     D: AsRef<str>,
   {
     self
-      .request(format!(
+      .call(format!(
         "{{\"type\":\"metaAndAssetCtxs\",\"dex\":\"{}\"}}",
         dex.as_ref()
       ))
       .await
   }
 
+  /// Sends a request to retrieve the perpetual DEXs.
+  pub async fn perp_dexs(&self) -> Result<Response<Vec<derivatives::perp_dex::Dex>>> {
+    self.call(PERP_DEXS_REQUEST_BODY).await
+  }
+
   /// Sends a request to retrieve the spot metadata.
-  pub async fn spot_meta(&self) -> Result<spot::meta::Meta> {
-    self.request(SPOT_META_REQUEST_BODY).await
+  pub async fn spot_meta(&self) -> Result<Response<spot::meta::Meta>> {
+    self.call(SPOT_META_REQUEST_BODY).await
   }
 
   /// Sends a request to retrieve the spot metadata and asset contexts.
-  pub async fn spot_meta_and_asset_ctxs(&self) -> Result<spot::meta::MetaAndAssetContexts> {
-    self.request(SPOT_META_AND_ASSET_CTXS_REQUEST_BODY).await
+  pub async fn spot_meta_and_asset_ctxs(
+    &self,
+  ) -> Result<Response<spot::meta::MetaAndAssetContexts>> {
+    self.call(SPOT_META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 }
 
 impl<E, Url> AsyncClient<E, Url> {
   #[inline(always)]
-  async fn request<O>(&self, body: impl Into<Body>) -> Result<O>
+  async fn call<O>(&self, body: impl Into<Body>) -> Result<Response<O>>
   where
-    O: for<'de> serde::Deserialize<'de>,
+    ResponseData<O>: for<'de> serde::Deserialize<'de>,
     Url: IntoUrl + Clone,
   {
-    self
+    use core::mem::take;
+
+    let mut resp = self
       .client
       .post(self.url.clone())
       .header("content-type", "application/json")
       .body(body)
       .send()
-      .await?
-      .json()
-      .await
+      .await?;
+
+    let headers = take(resp.headers_mut());
+    let extensions = take(resp.extensions_mut());
+    let version = resp.version();
+    let status = resp.status();
+    let remote_addr = resp.remote_addr();
+
+    let data = resp.json::<ResponseData<O>>().await?;
+
+    let mut ret = http::Response::new(data);
+    *ret.headers_mut() = headers;
+    *ret.version_mut() = version;
+    *ret.status_mut() = status;
+    *ret.extensions_mut() = extensions;
+
+    Ok(Response::new(ret).with_remote_addr(remote_addr))
   }
 }
