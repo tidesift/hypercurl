@@ -132,14 +132,12 @@ where
   Url: IntoUrl + Clone,
 {
   /// Sends a meta request to retrieve the spot metadata.
-  pub async fn meta(&self) -> Result<Response<derivatives::meta::Meta>> {
+  pub async fn meta(&self) -> Result<Response<derivatives::Meta>> {
     self.call(META_REQUEST_BODY).await
   }
 
   /// Sends a request to retrieve the meta and asset contexts.
-  pub async fn meta_and_asset_ctxs(
-    &self,
-  ) -> Result<Response<derivatives::meta::MetaAndAssetContexts>> {
+  pub async fn meta_and_asset_ctxs(&self) -> Result<Response<derivatives::MetaAndAssetContexts>> {
     self.call(META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 
@@ -147,7 +145,7 @@ where
   pub async fn meta_and_asset_ctxs_with_dex<D>(
     &self,
     dex: D,
-  ) -> Result<Response<Option<derivatives::meta::MetaAndAssetContexts>>>
+  ) -> Result<Response<Option<derivatives::MetaAndAssetContexts>>>
   where
     D: AsRef<str>,
   {
@@ -160,7 +158,7 @@ where
   }
 
   /// Sends a request to retrieve the perpetual DEXs.
-  pub async fn perp_dexs(&self) -> Result<Response<Vec<derivatives::perp_dex::Dex>>> {
+  pub async fn perp_dexs(&self) -> Result<Response<Vec<derivatives::Dex>>> {
     self.call(PERP_DEXS_REQUEST_BODY).await
   }
 
@@ -197,6 +195,19 @@ where
     self
       .call(format!(
         "{{\"type\":\"spotDeployState\",\"user\":\"{}\"}}",
+        user
+      ))
+      .await
+  }
+
+  /// Sends a request to retrieve the spot clearing house state.
+  pub async fn spot_clearinghouse_state(
+    &self,
+    user: Address,
+  ) -> Result<Response<spot::ClearinghouseState>> {
+    self
+      .call(format!(
+        "{{\"type\":\"spotClearinghouseState\",\"user\":\"{}\"}}",
         user
       ))
       .await

@@ -2,7 +2,7 @@ use alloy_primitives::{Address, B128};
 use smol_str::SmolStr;
 
 #[cfg(feature = "serde")]
-use crate::utils::serde_triomphe_array;
+use crate::utils::serde_arc_array;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -170,9 +170,9 @@ impl TokenInfo {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct Meta {
-  #[cfg_attr(feature = "serde", serde(with = "serde_triomphe_array"))]
+  #[cfg_attr(feature = "serde", serde(with = "serde_arc_array"))]
   universe: Arc<[AssetMeta]>,
-  #[cfg_attr(feature = "serde", serde(with = "serde_triomphe_array"))]
+  #[cfg_attr(feature = "serde", serde(with = "serde_arc_array"))]
   tokens: Arc<[TokenInfo]>,
 }
 

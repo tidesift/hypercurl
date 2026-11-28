@@ -3,13 +3,13 @@ use smol_str::SmolStr;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-pub use deploy::*;
 pub use meta::*;
+pub use state::*;
 
 /// The metadata data structures for spots of the Hyperliquid Core API.
 mod meta;
 
-mod deploy;
+mod state;
 
 pub use super::pair_deploy_auction_status::PairDeployAuctionStatus;
 

@@ -1,5 +1,5 @@
 #[cfg(feature = "serde")]
-pub(crate) mod serde_triomphe_array {
+pub(crate) mod serde_arc_array {
   use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
   pub fn serialize<T, S>(value: &triomphe::Arc<[T]>, serializer: S) -> Result<S::Ok, S::Error>
@@ -16,6 +16,35 @@ pub(crate) mod serde_triomphe_array {
     T: Deserialize<'de>,
   {
     Vec::<T>::deserialize(deserializer).map(Into::into)
+  }
+}
+
+#[cfg(feature = "serde")]
+pub(crate) mod serde_optional_arc_array {
+  use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+  pub fn serialize<T, S>(
+    value: &Option<triomphe::Arc<[T]>>,
+    serializer: S,
+  ) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+    T: Serialize,
+  {
+    if let Some(value) = value {
+      let slice: &[T] = value.as_ref();
+      slice.serialize(serializer)
+    } else {
+      serializer.serialize_none()
+    }
+  }
+
+  pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<triomphe::Arc<[T]>>, D::Error>
+  where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+  {
+    Option::<Vec<T>>::deserialize(deserializer).map(|opt| opt.map(Into::into))
   }
 }
 

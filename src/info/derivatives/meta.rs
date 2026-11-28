@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::TakeArc;
 #[cfg(feature = "serde")]
-use crate::utils::serde_triomphe_array;
+use crate::utils::serde_arc_array;
 
 /// The margin tier for derivatives trading.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -270,9 +270,9 @@ impl AssetMeta {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct Meta {
-  #[cfg_attr(feature = "serde", serde(with = "serde_triomphe_array"))]
+  #[cfg_attr(feature = "serde", serde(with = "serde_arc_array"))]
   universe: Arc<[AssetMeta]>,
-  #[cfg_attr(feature = "serde", serde(with = "serde_triomphe_array"))]
+  #[cfg_attr(feature = "serde", serde(with = "serde_arc_array"))]
   margin_tables: Arc<[MarginTable]>,
   collateral_token: usize,
 }
@@ -549,7 +549,7 @@ impl MetaAndAssetContexts {
 
 #[cfg(feature = "serde")]
 const _: () = {
-  use crate::utils::serde_triomphe_array;
+  use crate::utils::serde_arc_array;
   use serde::{Deserializer, Serializer};
 
   crate::http::serde_response_data!(@forward MetaAndAssetContexts, Meta);
@@ -559,7 +559,7 @@ const _: () = {
   #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
   struct MarginTableFields {
     description: SmolStr,
-    #[serde(with = "serde_triomphe_array")]
+    #[serde(with = "serde_arc_array")]
     margin_tiers: Arc<[MarginTier]>,
   }
 
