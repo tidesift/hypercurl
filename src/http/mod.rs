@@ -25,6 +25,12 @@ pub const META_REQUEST_BODY: &str = r#"{"type":"meta"}"#;
 pub const META_AND_ASSET_CTXS_REQUEST_BODY: &str = r#"{"type":"metaAndAssetCtxs"}"#;
 /// The body of the perpetual DEXs request.
 pub const PERP_DEXS_REQUEST_BODY: &str = r#"{"type":"perpDexs"}"#;
+/// The body of the spot pair deploy auction status request.
+pub const SPOT_PAIR_DEPLOY_AUCTION_STATUS_REQUEST_BODY: &str =
+  r#"{"type":"spotPairDeployAuctionStatus"}"#;
+/// The body of the perps pair deploy auction status request.
+pub const PERPS_PAIR_DEPLOY_AUCTION_STATUS_REQUEST_BODY: &str =
+  r#"{"type":"perpDeployAuctionStatus"}"#;
 
 mod sealed {
   pub trait Endpoint {}

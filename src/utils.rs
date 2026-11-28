@@ -19,6 +19,27 @@ pub(crate) mod serde_triomphe_array {
   }
 }
 
+#[cfg(feature = "serde")]
+pub(crate) mod serde_seconds {
+  use core::time::Duration;
+  use serde::{Deserialize, Deserializer, Serializer};
+
+  pub fn serialize<S>(value: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serializer.serialize_u64(value.as_secs())
+  }
+
+  pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    let secs = u64::deserialize(deserializer)?;
+    Ok(Duration::from_secs(secs))
+  }
+}
+
 pub(crate) trait TakeArc<T> {
   fn take_arc(&mut self) -> triomphe::Arc<[T]>;
 }

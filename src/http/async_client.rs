@@ -174,6 +174,24 @@ where
   ) -> Result<Response<spot::meta::MetaAndAssetContexts>> {
     self.call(SPOT_META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
+
+  /// Sends a request to retrieve the perps pair deploy auction status.
+  pub async fn perps_pair_deploy_auction_status(
+    &self,
+  ) -> Result<Response<derivatives::PairDeployAuctionStatus>> {
+    self
+      .call(PERPS_PAIR_DEPLOY_AUCTION_STATUS_REQUEST_BODY)
+      .await
+  }
+
+  /// Sends a request to retrieve the spot pair deploy auction status.
+  pub async fn spot_pair_deploy_auction_status(
+    &self,
+  ) -> Result<Response<spot::PairDeployAuctionStatus>> {
+    self
+      .call(SPOT_PAIR_DEPLOY_AUCTION_STATUS_REQUEST_BODY)
+      .await
+  }
 }
 
 impl<E, Url> AsyncClient<E, Url> {
