@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 
+use alloy_primitives::Address;
 use reqwest::{Body, Client as HttpClient, IntoUrl};
 
 use super::*;
@@ -164,14 +165,12 @@ where
   }
 
   /// Sends a request to retrieve the spot metadata.
-  pub async fn spot_meta(&self) -> Result<Response<spot::meta::Meta>> {
+  pub async fn spot_meta(&self) -> Result<Response<spot::Meta>> {
     self.call(SPOT_META_REQUEST_BODY).await
   }
 
   /// Sends a request to retrieve the spot metadata and asset contexts.
-  pub async fn spot_meta_and_asset_ctxs(
-    &self,
-  ) -> Result<Response<spot::meta::MetaAndAssetContexts>> {
+  pub async fn spot_meta_and_asset_ctxs(&self) -> Result<Response<spot::MetaAndAssetContexts>> {
     self.call(SPOT_META_AND_ASSET_CTXS_REQUEST_BODY).await
   }
 
@@ -190,6 +189,16 @@ where
   ) -> Result<Response<spot::PairDeployAuctionStatus>> {
     self
       .call(SPOT_PAIR_DEPLOY_AUCTION_STATUS_REQUEST_BODY)
+      .await
+  }
+
+  /// Sends a request to retrieve the spot deploy state for a specific user.
+  pub async fn spot_deploy_state(&self, user: Address) -> Result<Response<spot::DeployState>> {
+    self
+      .call(format!(
+        "{{\"type\":\"spotDeployState\",\"user\":\"{}\"}}",
+        user
+      ))
       .await
   }
 }

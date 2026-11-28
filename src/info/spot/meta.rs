@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use triomphe::Arc;
 
-use crate::utils::TakeArc;
+use crate::{info::spot::TokenMeta, utils::TakeArc};
 
 /// The metadata for a spot asset in the hyperliquid core API.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -79,9 +79,8 @@ impl EvmContract {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "strict-serde", serde(deny_unknown_fields))]
 pub struct TokenInfo {
-  name: SmolStr,
-  sz_decimals: u8,
-  wei_decimals: u8,
+  #[cfg_attr(feature = "serde", serde(flatten))]
+  meta: TokenMeta,
   index: usize,
   token_id: B128,
   is_canonical: bool,
@@ -107,19 +106,19 @@ impl TokenInfo {
   /// Returns the name of the token.
   #[inline(always)]
   pub const fn name(&self) -> &SmolStr {
-    &self.name
+    self.meta.name()
   }
 
   /// Returns the size decimals of the token.
   #[inline(always)]
   pub const fn sz_decimals(&self) -> u8 {
-    self.sz_decimals
+    self.meta.sz_decimals()
   }
 
   /// Returns the wei decimals of the token.
   #[inline(always)]
   pub const fn wei_decimals(&self) -> u8 {
-    self.wei_decimals
+    self.meta.wei_decimals()
   }
 
   /// Returns the index of the token.
